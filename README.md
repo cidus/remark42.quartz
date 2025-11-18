@@ -27,7 +27,7 @@ const plugins: PluginStore = {
 }
 ```
 
-you will also need to add a line exporting the plugin to \<repo\>/quartz/plugins/index.ts.
+you will also need to add a line exporting the plugin to \<repo\>/quartz/plugins/transformers/index.ts.
 
 ## Usage
 Configure in `quartz.plugins.ts` according to the [Remark42 docs](https://remark42.com/docs/configuration/frontend/) and place an empty `div` somewhere in a component or markdown with the property `id="remark42"`.
