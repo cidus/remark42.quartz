@@ -1,0 +1,132 @@
+{
+  "name": "quartz-plugin-remark42",
+  "version": "2.0.0",
+  "description": "Remark42 comments component for Quartz 5",
+  "type": "module",
+  "license": "MIT",
+  "author": "OCDkirby",
+  "contributors": [
+    "cidus (Quartz 5 port)"
+  ],
+  "homepage": "https://github.com/cidus/remark42.quartz",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/cidus/remark42.quartz"
+  },
+  "keywords": [
+    "quartz",
+    "quartz-plugin",
+    "comments",
+    "remark42",
+    "component"
+  ],
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "sideEffects": false,
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch"
+  },
+  "peerDependencies": {
+    "preact": "^10.0.0"
+  },
+  "peerDependenciesMeta": {
+    "preact": {
+      "optional": false
+    }
+  },
+  "dependencies": {
+    "@quartz-community/types": "^0.2.1"
+  },
+  "devDependencies": {
+    "preact": "^10.28.2",
+    "tsup": "^8.5.0",
+    "typescript": "^5.9.3"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "quartz": {
+    "name": "remark42",
+    "displayName": "Remark42",
+    "category": "component",
+    "version": "2.0.0",
+    "quartzVersion": ">=5.0.0",
+    "dependencies": [],
+    "defaultOrder": 50,
+    "defaultEnabled": false,
+    "defaultOptions": {
+      "host": "https://comments.my-host.com",
+      "site_id": "remark",
+      "theme": "light",
+      "no_footer": true
+    },
+    "optionSchema": {
+      "host": {
+        "type": "string"
+      },
+      "site_id": {
+        "type": "string"
+      },
+      "idField": {
+        "type": "string"
+      },
+      "components": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      },
+      "max_shown_comments": {
+        "type": "number"
+      },
+      "max_last_comments": {
+        "type": "number"
+      },
+      "theme": {
+        "type": "enum",
+        "values": ["light", "dark"]
+      },
+      "page_title": {
+        "type": "string"
+      },
+      "locale": {
+        "type": "string"
+      },
+      "show_email_subscription": {
+        "type": "boolean"
+      },
+      "show_rss_subscription": {
+        "type": "boolean"
+      },
+      "simple_view": {
+        "type": "boolean"
+      },
+      "no_footer": {
+        "type": "boolean"
+      }
+    },
+    "components": {
+      "Remark42": {
+        "displayName": "Remark42",
+        "defaultPosition": "afterBody",
+        "defaultPriority": 10
+      }
+    }
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}
