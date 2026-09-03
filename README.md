@@ -11,19 +11,36 @@ page's slug doesn't orphan its comments.
 ## Installing
 
 ```sh
-npx quartz plugin add https://github.com/cidus/remark42.quartz
-npx quartz plugin enable remark42
+npx quartz plugin add github:cidus/remark42.quartz
+npx quartz plugin enable remark42.quartz
 ```
 
-Then configure it in `quartz.config.yaml`:
+Quartz's plugin loader (`parsePluginSource`) only accepts a handful of
+`source:` formats — notably **not** a bare npm package name, even if the
+package is already in `node_modules`:
+
+```yaml
+- source: "quartz-plugin-remark42" # Error: Cannot parse plugin source
+```
+
+What works:
+
+```yaml
+- source: "github:cidus/remark42.quartz" # GitHub shorthand
+- source: "https://github.com/cidus/remark42.quartz" # full URL, same thing
+- source: "/home/you/git/github/remark42.quartz" # local path, for plugin development
+```
+
+A full working example, since this plugin is a component and needs the
+`layout:` block:
 
 ```yaml
 plugins:
-  - source: https://github.com/cidus/remark42.quartz
+  - source: "github:cidus/remark42.quartz"
     enabled: true
     options:
-      host: "https://comments.my-host.com"
-      site_id: "remark"
+      host: "https://comments.example.com"
+      site_id: "mysite"
       theme: "light"
       no_footer: true
     layout:
@@ -37,8 +54,8 @@ For advanced use cases you can override in TypeScript:
 import * as ExternalPlugin from "./.quartz/plugins"
 
 ExternalPlugin.Remark42({
-  host: "https://comments.my-host.com",
-  site_id: "remark",
+  host: "https://comments.example.com",
+  site_id: "mysite",
   theme: "light",
   no_footer: true,
 })
@@ -72,6 +89,12 @@ that page's frontmatter.
 | `simple_view`               | `boolean`             | -           | Use Remark42's simple view.                                             |
 | `no_footer`                 | `boolean`             | -           | Hide the Remark42 footer.                                               |
 
+### Default identity: the page URL
+
+Without `idField`, the thread id is `window.location.origin + pathname` —
+deliberately dropping the query string and hash, so `?utm_source=x` or
+`#section` can't fork one page into several separate comment threads.
+
 ### Stable comment identity (`idField`)
 
 By default Remark42 keys a thread by the page's URL. If your site derives
@@ -83,8 +106,8 @@ at it:
 
 ```yaml
 options:
-  host: "https://comments.my-host.com"
-  site_id: "remark"
+  host: "https://comments.example.com"
+  site_id: "mysite"
   idField: "my_stable_id"
 ```
 
@@ -97,6 +120,27 @@ my_stable_id: 01K5A00000000000000000EXAMPLE
 
 The comment thread then stays attached to `my_stable_id`, independent of the
 page's URL. Leave `idField` unset to keep the default (page URL) behavior.
+
+**Caveat — the "last comments" widget.** Remark42's `last-comments` component
+builds each comment's link by concatenating the thread id directly into an
+`href` (`` `${url}#${anchor}` ``). That's fine for the comment thread itself,
+which works correctly with any opaque id, but if the id isn't a URL the
+"last comments" widget produces a dead relative link like
+`href="01K5A0...#comment-abc"` that resolves against whatever page it's
+embedded on. This only affects that optional widget.
+
+If you need both a stable id *and* working "last comments" links, there's no
+built-in option for it yet — the shape would be: emit a redirect page at
+`/id/<value>` (e.g. via `@quartz-community/alias-redirects`, driven from an
+`aliases` frontmatter entry) and give this plugin an option to prefix the
+`idField` value with the site's base URL so it resolves to that redirect.
+
+## Developing this plugin
+
+`npx quartz plugin add <source> --verbose` **exits 0 even when the plugin's
+own build fails** — it prints `✗ <name>: build failed` in the middle of
+otherwise-successful-looking output. Always read the output; don't trust the
+exit code.
 
 ## Upstream
 
