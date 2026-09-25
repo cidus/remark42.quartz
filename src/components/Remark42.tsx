@@ -41,10 +41,15 @@ function boolToStringBool(b?: boolean): string | undefined {
 const remark42Script = `
 (function () {
   var scriptsLoaded = false
+  var scriptsRetried = false
   var instance
 
   function boolAttr(v) {
     return v === undefined ? undefined : v === "1"
+  }
+
+  function root() {
+    return document.getElementById("remark42")
   }
 
   function buildConfig(el) {
@@ -65,16 +70,53 @@ const remark42Script = `
   function loadScripts(el) {
     var host = el.dataset.host
     var components = (el.dataset.components || "embed").split(",")
+    var pending = components.length
     for (var i = 0; i < components.length; i++) {
       var script = document.createElement("script")
       script.src = host + "/web/" + components[i] + ".js"
       script.async = true
+      script.onload = function () {
+        if (--pending === 0) ensureMounted()
+      }
+      script.onerror = function () {
+        // A single failed request (a cold tunnel, a dropped connection on the
+        // first hit of a session) would otherwise leave the thread missing
+        // until the visitor reloads by hand. Retry once, then give up.
+        pending = 0
+        if (scriptsRetried) return
+        scriptsRetried = true
+        scriptsLoaded = false
+        setTimeout(initRemark42, 1000)
+      }
       document.head.appendChild(script)
     }
   }
 
+  function createInstance() {
+    // Whoever created the live widget owns it: embed.js self-inits on load and
+    // hands us nothing back, so fall back to the global destroy it exposes
+    // instead of stacking a second instance on top of a running iframe.
+    try {
+      if (instance && instance.destroy) instance.destroy()
+      else if (window.REMARK42.destroy) window.REMARK42.destroy()
+    } catch (e) {}
+    instance = window.REMARK42.createInstance(window.remark_config)
+  }
+
+  // Runs once the embed scripts are in. embed.js normally mounts itself from
+  // window.remark_config, but only if the root node was in the document at the
+  // moment it ran and its config was already set. If it wasn't, nothing else
+  // will ever retry, so check for the iframe and mount explicitly.
+  function ensureMounted() {
+    var el = root()
+    if (!el || !window.REMARK42 || !window.REMARK42.createInstance) return
+    if (el.querySelector("iframe")) return
+    window.remark_config = buildConfig(el)
+    createInstance()
+  }
+
   function initRemark42() {
-    var el = document.getElementById("remark42")
+    var el = root()
     if (!el) return
 
     window.remark_config = buildConfig(el)
@@ -84,13 +126,23 @@ const remark42Script = `
       scriptsLoaded = true
       loadScripts(el)
     } else if (window.REMARK42) {
-      if (instance) instance.destroy()
-      instance = window.REMARK42.createInstance(window.remark_config)
+      createInstance()
     }
   }
 
   document.addEventListener("nav", initRemark42)
   document.addEventListener("render", initRemark42)
+
+  // Quartz fires "nav" from its SPA router, which is loaded after this script.
+  // Don't depend on winning that race: the root node is server-rendered, so if
+  // it is already here there is nothing to wait for, and mounting now also puts
+  // the request for embed.js in flight sooner. Later "nav" events still fire
+  // and are idempotent.
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", initRemark42, { once: true })
+  } else {
+    initRemark42()
+  }
 
   document.addEventListener("click", function (e) {
     var toggle = e.target && e.target.closest && e.target.closest("#darkmode-toggle")
