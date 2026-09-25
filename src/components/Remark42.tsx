@@ -92,14 +92,24 @@ const remark42Script = `
     }
   }
 
-  function createInstance() {
-    // Whoever created the live widget owns it: embed.js self-inits on load and
-    // hands us nothing back, so fall back to the global destroy it exposes
-    // instead of stacking a second instance on top of a running iframe.
+  // Tear the widget down while its instance is still the one REMARK42 exposes.
+  // Every createInstance() overwrites window.REMARK42.destroy, so an instance
+  // left running across a navigation can never be reached again -- and it keeps
+  // a "message" listener that, on the next instance's "inited", empties every
+  // child of the comments node except its own (by then removed) iframe. Since
+  // the node itself survives Quartz's DOM patch, that wipes the iframe the new
+  // instance had just mounted, which is why comments vanished after an
+  // in-place navigation and came back on a full reload.
+  function teardown() {
     try {
       if (instance && instance.destroy) instance.destroy()
-      else if (window.REMARK42.destroy) window.REMARK42.destroy()
+      else if (window.REMARK42 && window.REMARK42.destroy) window.REMARK42.destroy()
     } catch (e) {}
+    instance = undefined
+  }
+
+  function createInstance() {
+    teardown()
     instance = window.REMARK42.createInstance(window.remark_config)
   }
 
@@ -130,6 +140,9 @@ const remark42Script = `
     }
   }
 
+  // Quartz fires "prenav" before it patches the DOM, which is the last moment
+  // the running instance can still be destroyed cleanly.
+  document.addEventListener("prenav", teardown)
   document.addEventListener("nav", initRemark42)
   document.addEventListener("render", initRemark42)
 
