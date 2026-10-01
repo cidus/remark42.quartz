@@ -51,14 +51,14 @@ plugins:
 For advanced use cases you can override in TypeScript:
 
 ```ts title="quartz.ts (override)"
-import * as ExternalPlugin from "./.quartz/plugins"
+import * as ExternalPlugin from "./.quartz/plugins";
 
 ExternalPlugin.Remark42({
   host: "https://comments.example.com",
   site_id: "mysite",
   theme: "light",
   no_footer: true,
-})
+});
 ```
 
 ## Usage
@@ -73,21 +73,21 @@ that page's frontmatter.
 
 ## Options
 
-| Option                     | Type                 | Default     | Description                                                             |
-| --------------------------- | -------------------- | ----------- | ------------------------------------------------------------------------ |
-| `host`                      | `string`              | -           | URL of your Remark42 instance.                                          |
-| `site_id`                   | `string`              | -           | Your Remark42 site id.                                                  |
-| `idField`                   | `string`              | `undefined` | Frontmatter field to use as the thread id instead of the page URL.      |
-| `components`                | `string[]`            | `["embed"]` | Remark42 web components to load, e.g. `["embed", "last-comments"]`.     |
-| `max_shown_comments`        | `number`              | -           | Max comments shown initially.                                           |
-| `max_last_comments`         | `number`              | -           | Max comments shown in the `last-comments` component.                    |
-| `theme`                     | `"light" \| "dark"`   | -           | Falls back to Quartz's `saved-theme` attribute and syncs on toggle.     |
-| `page_title`                | `string`              | -           | Don't use this — it'll break your comment database.                     |
-| `locale`                    | `string`              | -           | See the [locale list](https://remark42.com/docs/configuration/frontend/#locales). |
-| `show_email_subscription`   | `boolean`             | -           | Show the email subscription option.                                     |
-| `show_rss_subscription`     | `boolean`             | -           | Show the RSS subscription option.                                       |
-| `simple_view`               | `boolean`             | -           | Use Remark42's simple view.                                             |
-| `no_footer`                 | `boolean`             | -           | Hide the Remark42 footer.                                               |
+| Option                    | Type                | Default     | Description                                                                       |
+| ------------------------- | ------------------- | ----------- | --------------------------------------------------------------------------------- |
+| `host`                    | `string`            | -           | URL of your Remark42 instance.                                                    |
+| `site_id`                 | `string`            | -           | Your Remark42 site id.                                                            |
+| `idField`                 | `string`            | `undefined` | Frontmatter field to use as the thread id instead of the page URL.                |
+| `components`              | `string[]`          | `["embed"]` | Remark42 web components to load, e.g. `["embed", "last-comments"]`.               |
+| `max_shown_comments`      | `number`            | -           | Max comments shown initially.                                                     |
+| `max_last_comments`       | `number`            | -           | Max comments shown in the `last-comments` component.                              |
+| `theme`                   | `"light" \| "dark"` | -           | Falls back to Quartz's `saved-theme` attribute and syncs on toggle.               |
+| `page_title`              | `string`            | -           | Don't use this — it'll break your comment database.                               |
+| `locale`                  | `string`            | -           | See the [locale list](https://remark42.com/docs/configuration/frontend/#locales). |
+| `show_email_subscription` | `boolean`           | -           | Show the email subscription option.                                               |
+| `show_rss_subscription`   | `boolean`           | -           | Show the RSS subscription option.                                                 |
+| `simple_view`             | `boolean`           | -           | Use Remark42's simple view.                                                       |
+| `no_footer`               | `boolean`           | -           | Hide the Remark42 footer.                                                         |
 
 ### Default identity: the page URL
 
@@ -129,13 +129,39 @@ which works correctly with any opaque id, but if the id isn't a URL the
 `href="01K5A0...#comment-abc"` that resolves against whatever page it's
 embedded on. This only affects that optional widget.
 
-If you need both a stable id *and* working "last comments" links, there's no
+If you need both a stable id _and_ working "last comments" links, there's no
 built-in option for it yet — the shape would be: emit a redirect page at
 `/id/<value>` (e.g. via `@quartz-community/alias-redirects`, driven from an
 `aliases` frontmatter entry) and give this plugin an option to prefix the
 `idField` value with the site's base URL so it resolves to that redirect.
 
 ## Developing this plugin
+
+The project follows the
+[Quartz community plugin template](https://github.com/quartz-community/plugin-template):
+
+```
+src/
+├── index.ts                         # entry point (exports Remark42)
+├── types.ts                         # re-exported types (./types subpath)
+├── components/
+│   ├── index.ts                     # ./components subpath
+│   ├── Remark42.tsx                 # the component (server-rendered)
+│   └── scripts/remark42.inline.ts   # client script, bundled into a string
+├── util/lang.ts
+└── build/validate-manifest.ts       # warns about an incomplete `quartz` manifest
+test/remark42.test.ts
+```
+
+```sh
+npm install
+npm run check   # typecheck + lint + format + test
+npm run build   # writes dist/
+```
+
+`dist/` is committed on purpose: Quartz detects the pre-built output and skips
+the install/build step when the plugin is added. Run `npm run build` and
+commit `dist/` together with any change to `src/`.
 
 `npx quartz plugin add <source> --verbose` **exits 0 even when the plugin's
 own build fails** — it prints `✗ <name>: build failed` in the middle of
