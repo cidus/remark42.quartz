@@ -96,7 +96,6 @@
     "defaultOptions": {
       "host": "https://comments.my-host.com",
       "site_id": "remark",
-      "theme": "light",
       "no_footer": true
     },
     "optionSchema": {

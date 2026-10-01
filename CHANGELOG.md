@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- `theme` no longer defaults to `light` in the manifest, so an unset `theme`
+  follows Quartz's current theme as documented instead of always rendering
+  light comments on dark sites.
+
 ### Changed
 
 - Restructured the repository to follow the Quartz community plugin template:
