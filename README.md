@@ -1,12 +1,14 @@
 # remark42.quartz
 
-Quartz 5 component for [Remark42](https://remark42.com/) comments.
+Self-hosted, privacy-friendly comments for Quartz 5 sites, powered by Remark42. Adds a comment thread below each page, follows Quartz's light/dark theme and SPA navigation, can be turned off per page from frontmatter, and can key threads by a stable frontmatter id so renaming a page never orphans its comments.
 
 Originally written by [OCDkirby](https://github.com/OCDkirby/remark42.quartz)
 for Quartz 4. This fork restructures it as a Quartz 5 plugin (a compatibility
-break — see [Upstream](#upstream)) and adds one feature: comment threads can
-be keyed by a stable frontmatter field instead of the page URL, so renaming a
-page's slug doesn't orphan its comments.
+break — see [Upstream](#upstream)) and adds the stable thread id
+([`idField`](#stable-comment-identity-idfield)).
+
+You need a running [Remark42](https://remark42.com/) server; this plugin only
+embeds it.
 
 ## Installing
 
@@ -14,6 +16,10 @@ page's slug doesn't orphan its comments.
 npx quartz plugin add github:cidus/remark42.quartz
 npx quartz plugin enable remark42.quartz
 ```
+
+The plugin ships disabled (`defaultEnabled: false`) because it does nothing
+useful until `host` and `site_id` point at your Remark42 server — hence the
+`enable` step.
 
 Quartz's plugin loader (`parsePluginSource`) only accepts a handful of
 `source:` formats — notably **not** a bare npm package name, even if the
@@ -64,9 +70,9 @@ ExternalPlugin.Remark42({
 ## Usage
 
 Configure the options below according to the
-[Remark42 docs](https://remark42.com/docs/configuration/frontend/). The
-component renders its own `<div id="remark42">`, so there's nothing to add to
-your content or layout beyond enabling it.
+[Remark42 docs](https://remark42.com/docs/configuration/frontend/). At minimum
+set `host` and `site_id`. The component renders its own `<div id="remark42">`,
+so there's nothing to add to your content or layout beyond enabling it.
 
 A single-page comment thread can be hidden by setting `comments: false` in
 that page's frontmatter.
@@ -75,19 +81,19 @@ that page's frontmatter.
 
 | Option                    | Type                | Default     | Description                                                                       |
 | ------------------------- | ------------------- | ----------- | --------------------------------------------------------------------------------- |
-| `host`                    | `string`            | -           | URL of your Remark42 instance.                                                    |
-| `site_id`                 | `string`            | -           | Your Remark42 site id.                                                            |
-| `idField`                 | `string`            | `undefined` | Frontmatter field to use as the thread id instead of the page URL.                |
+| `host`                    | `string`            | placeholder | URL of your Remark42 instance. **Required.**                                      |
+| `site_id`                 | `string`            | `"remark"`  | Your Remark42 site id (Remark42's own default is `remark`).                       |
+| `idField`                 | `string`            | -           | Frontmatter field to use as the thread id instead of the page URL.                |
 | `components`              | `string[]`          | `["embed"]` | Remark42 web components to load, e.g. `["embed", "last-comments"]`.               |
 | `max_shown_comments`      | `number`            | -           | Max comments shown initially.                                                     |
 | `max_last_comments`       | `number`            | -           | Max comments shown in the `last-comments` component.                              |
-| `theme`                   | `"light" \| "dark"` | -           | Falls back to Quartz's `saved-theme` attribute and syncs on toggle.               |
+| `theme`                   | `"light" \| "dark"` | -           | Unset: follows Quartz's current theme. Either way, syncs on the dark-mode toggle. |
 | `page_title`              | `string`            | -           | Don't use this — it'll break your comment database.                               |
 | `locale`                  | `string`            | -           | See the [locale list](https://remark42.com/docs/configuration/frontend/#locales). |
 | `show_email_subscription` | `boolean`           | -           | Show the email subscription option.                                               |
 | `show_rss_subscription`   | `boolean`           | -           | Show the RSS subscription option.                                                 |
 | `simple_view`             | `boolean`           | -           | Use Remark42's simple view.                                                       |
-| `no_footer`               | `boolean`           | -           | Hide the Remark42 footer.                                                         |
+| `no_footer`               | `boolean`           | `true`      | Hide the Remark42 footer.                                                         |
 
 ### Default identity: the page URL
 
@@ -163,9 +169,10 @@ npm run build   # writes dist/
 the install/build step when the plugin is added. Run `npm run build` and
 commit `dist/` together with any change to `src/`.
 
-`npx quartz plugin add <source> --verbose` **exits 0 even when the plugin's
-own build fails** — it prints `✗ <name>: build failed` in the middle of
-otherwise-successful-looking output. Always read the output; don't trust the
+When Quartz does have to build the plugin (a working copy without `dist/`, for
+example), note that `npx quartz plugin add <source> --verbose` **exits 0 even
+when the plugin's own build fails** — it prints `✗ <name>: build failed` in
+the middle of otherwise-successful-looking output. Always read the output; don't trust the
 exit code.
 
 ## Upstream
